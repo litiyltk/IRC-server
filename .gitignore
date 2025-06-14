@@ -1,0 +1,61 @@
+# Игнорировать скомпилированные бинарные файлы
+*.exe
+*.out
+*.app
+*.so
+*.dll
+*.a
+*.lib
+*.dylib
+
+# Игнорировать объектные файлы и промежуточные файлы компиляции
+*.o
+*.obj
+*.lo
+*.la
+*.ilk
+*.pdb
+*.slo
+*.d
+
+# Игнорировать директории сборки (CMake, Make, Autotools, etc.)
+build/
+bin/
+out/
+Debug/
+Release/
+x64/
+.vs/
+.idea/
+.vscode/
+
+# Игнорировать файлы CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+Makefile
+CTestTestfile.cmake
+
+# Игнорировать логи и временные файлы
+*.log
+*.swp
+*.swo
+*~
+*.bak
+
+# Игнорировать пользовательские файлы IDE (Visual Studio, CLion, Qt Creator, etc.)
+*.suo
+*.user
+*.ncb
+*.sdf
+*.opensdf
+*.vcxproj*
+*.filters
+*.sln
+*.cmake
+
+# vcpkg
+vcpkg_installed/
+vcpkg_ports/
+vcpkg_buildtrees/

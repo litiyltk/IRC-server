@@ -2,10 +2,14 @@
 
 
 void AuthController::RegisterUser(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback) {
+    // req.get()->version(); // version, keep_alive
     auto json = req->getJsonObject();
     if (!json || !json->isMember("login") || !json->isMember("password")) {
-        auto resp = drogon::HttpResponse::newHttpJsonResponse(Json::Value("Missing login or password"));
+        Json::Value body;
+        body["error"] = "Invalid JSON format";
+        auto resp = drogon::HttpResponse::newHttpJsonResponse(body);
         resp->setStatusCode(drogon::k400BadRequest);
+        resp->setContentTypeCode(drogon::CT_APPLICATION_JSON);
         callback(resp);
         return;
     }
@@ -13,17 +17,31 @@ void AuthController::RegisterUser(const drogon::HttpRequestPtr &req, std::functi
     const std::string login = (*json)["login"].asString();
     const std::string password = (*json)["password"].asString();
 
-    if (!UserManager::instance().RegisterUser(login, password)) {
-        auto resp = drogon::HttpResponse::newHttpJsonResponse(Json::Value("User already exists"));
-        resp->setStatusCode(drogon::k409Conflict);
+    if (login.empty() || password.empty()) {
+        Json::Value body;
+        body["error"] = "Fields 'login' and 'password' must be non-empty";
+        auto resp = drogon::HttpResponse::newHttpJsonResponse(body);
+        resp->setStatusCode(drogon::k400BadRequest);
+        resp->setContentTypeCode(drogon::CT_APPLICATION_JSON);
         callback(resp);
         return;
     }
 
-    auto resp = drogon::HttpResponse::newHttpResponse();
-    resp->setStatusCode(drogon::k200OK);
-    resp->setContentTypeCode(drogon::CT_TEXT_PLAIN);
-    resp->setBody("Registration successful");
+    if (!UserManager::instance().RegisterUser(login, password)) {
+        Json::Value body;
+        body["error"] = "User already exists";
+        auto resp = drogon::HttpResponse::newHttpJsonResponse(body);
+        resp->setStatusCode(drogon::k409Conflict);
+        resp->setContentTypeCode(drogon::CT_APPLICATION_JSON);
+        callback(resp);
+        return;
+    }
+
+    Json::Value body;
+    body["info"] = "Registration successful";
+    auto resp = drogon::HttpResponse::newHttpJsonResponse(body);
+    resp->setStatusCode(drogon::k201Created); // 200 OK
+    resp->setContentTypeCode(drogon::CT_APPLICATION_JSON);
     callback(resp);
 }
 
@@ -55,6 +73,7 @@ void AuthController::LoginUser(const drogon::HttpRequestPtr &req, std::function<
     }
 
     const std::string token = Token::GENERATOR.GenerateHEXToken();
+    std::cout << "User: " << login << " has token:" << token << "\n"; // Для отладки в консоли
     TokenStorage::instance().SaveToken(login, token);
 
     Json::Value result;

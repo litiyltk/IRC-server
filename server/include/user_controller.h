@@ -7,6 +7,8 @@
 #include <json/json.h>
 
 
+// REST API для работы с пользователями: список всех клиентов
+
 class UserController : public drogon::HttpController<UserController> {
 public:
     METHOD_LIST_BEGIN

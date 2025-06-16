@@ -19,7 +19,7 @@ public:
         Info, // подключение, отключение клиента, аутентификация
         Warning, // разница?
         Error, // разница?
-        Fatal // ошибки сервера - критические ошибки
+        Fatal // критические ошибки
     };
 
     static Logger& Get() {
@@ -27,8 +27,9 @@ public:
         return instance;
     }
 
-    // Иницализация логирования, флаг to_file для сохранения в файл, по умолчанию - вывод в консоль
-    static void Init(Level level = Logger::Level::Info, bool to_file = false, const std::string& path_to_file = "") { 
+    static void Init(Level level = Logger::Level::Info, // INFO
+                     bool to_file = false, // по умолчанию в консоль
+                     const std::string& path_to_file = "") {
         namespace logging = boost::log;
         namespace keywords = boost::log::keywords;
 

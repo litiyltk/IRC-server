@@ -74,6 +74,7 @@ void AuthController::LoginUser(const drogon::HttpRequestPtr &req, std::function<
 
     const std::string token = Token::GENERATOR.GenerateHEXToken();
     std::cout << "User: " << login << " has token:" << token << "\n"; // Для отладки в консоли
+    std::cout << "User: " << login << " has password hash:" << password << "\n"; // Для отладки в консоли
     TokenStorage::instance().SaveToken(login, token);
 
     Json::Value result;

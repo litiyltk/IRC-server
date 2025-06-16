@@ -1,5 +1,6 @@
 #pragma once
 
+#include "const_api.h"
 #include "token_storage.h"
 #include "chat_websocket.h"
 
@@ -12,7 +13,7 @@
 class MessageController : public drogon::HttpController<MessageController> {
 public:
     METHOD_LIST_BEGIN
-        ADD_METHOD_TO(MessageController::SendMessage, "/api/messages", drogon::Post); // TODO вынести в константы
+        ADD_METHOD_TO(MessageController::SendMessage, std::string(api::MESSAGE_SEND), drogon::Post);
     METHOD_LIST_END
 
     void SendMessage(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);

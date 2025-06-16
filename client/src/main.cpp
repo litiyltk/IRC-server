@@ -23,7 +23,6 @@ int main() {
 
     ChatClient client(servers[index].ip, servers[index].port);
 
-    //std::string input;
     while (true) {
         std::cout << "\nКоманды (register/login/send/list/logout/exit/create-room/join-room/leave-room/rooms/room/list-room): ";
         std::cin >> input;

@@ -1,17 +1,6 @@
 #include "chat_client.h"
 
 
-std::string HashPassword(const std::string& password) {
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    SHA256(reinterpret_cast<const unsigned char*>(password.c_str()), password.size(), hash);
-
-    std::ostringstream oss;
-    for (unsigned char c : hash) {
-        oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(c);
-    }
-    return oss.str();
-}
-
 ChatClient::ChatClient(const std::string& ip, uint16_t port) {
     base_url_ = "http://" + ip + ":" + std::to_string(port);
     ws_url_ = "ws://" + ip + ":" + std::to_string(port) + "/ws/chat";
@@ -20,46 +9,27 @@ ChatClient::ChatClient(const std::string& ip, uint16_t port) {
 bool ChatClient::RegisterUser(const std::string& login, const std::string& password) {
     Json::Value body;
     body["login"] = login;
-    body["password"] = HashPassword(password); // хэш пароля вместо чистого пароля!!!
-    Json::StreamWriterBuilder writer;
-    std::string json_str = Json::writeString(writer, body);
-
-    auto res = cpr::Post(cpr::Url{base_url_ + "/api/auth/register"},
-                         cpr::Header{{"Content-Type", "application/json"}},
-                         cpr::Body{json_str});
+    body["password"] = PasswordHasher().HashPassword(password);
+    auto res = SendPostRequest(std::string(api::AUTH_REGISTER), body, false);
     std::cout << res.text << "\n";
     return res.status_code == 200;
 }
 
 bool ChatClient::LoginUser(const std::string& login, const std::string& password) {
     if (IsLoggedIn()) {
-        std::cout << "Already logged in: '" << login_ << "\n";
+        std::cout << "Already logged in " << login_ << "\n";
         return false;
     }
 
     Json::Value body;
     body["login"] = login;
-    body["password"] = HashPassword(password); // хэш пароля вместо чистого пароля!!!
-    Json::StreamWriterBuilder writer;
-    std::string json_str = Json::writeString(writer, body);
+    body["password"] = PasswordHasher().HashPassword(password);
+    auto res = SendPostRequest(std::string(api::AUTH_LOGIN), body, false);
 
-    auto res = cpr::Post(cpr::Url{base_url_ + "/api/auth/login"},
-                         cpr::Header{{"Content-Type", "application/json"}},
-                         cpr::Body{json_str});
-    if (res.status_code == 200) {
-        Json::CharReaderBuilder reader;
-        Json::Value root;
-        std::string errs;
-        std::istringstream s(res.text);
-        if (Json::parseFromStream(reader, s, &root, &errs)) {
-            if (root.isObject() && root.isMember("token")) {
-                token_ = root["token"].asString();
-                login_ = login;
-                std::cout << "Token: " << token_ << "\n";
-                RunWebSocket();
-                return true;
-            }
-        }
+    if (res.status_code == 200 && ParseTokenFromJson(res.text)) {
+        login_ = login;
+        RunWebSocket();
+        return true;
     }
 
     token_.clear();
@@ -72,11 +42,7 @@ bool ChatClient::LogoutUser() {
         std::cout << "You are not logged in\n";
         return false;
     }
-
-    auto res = cpr::Post(cpr::Url{base_url_ + "/api/auth/logout"},
-                         cpr::Header{{"Authorization", "Bearer " + token_}});
-    std::cout << res.text << "\n";
-
+    auto res = SendPostRequest(std::string(api::AUTH_LOGOUT), Json::objectValue);
     token_.clear();
     StopWebSocket();
     std::cout << "Logged out successfully.\n";
@@ -84,33 +50,56 @@ bool ChatClient::LogoutUser() {
 }
 
 bool ChatClient::GetOnlineUsers() {
-    if (!IsLoggedIn()) {
-        std::cout << "You are not logged in\n";
-        return false;
-    }
-
-    auto res = cpr::Get(cpr::Url{base_url_ + "/api/users/online"},
-                        cpr::Header{{"Authorization", "Bearer " + token_}});
+    auto res = SendGetRequest(std::string(api::USERS_ONLINE));
     std::cout << res.text << "\n";
     return res.status_code == 200;
 }
 
 bool ChatClient::SendMessage(const std::string& text, const std::string& to) {
-    if (!IsLoggedIn()) {
-        std::cout << "You are not logged in\n";
-        return false;
-    }
-
     Json::Value body;
     body["text"] = text;
     body["to"] = to;
-    Json::StreamWriterBuilder writer;
-    std::string json_str = Json::writeString(writer, body);
+    auto res = SendPostRequest(std::string(api::MESSAGE_SEND), body);
+    std::cout << res.text << "\n";
+    return res.status_code == 200;
+}
 
-    auto res = cpr::Post(cpr::Url{base_url_ + "/api/messages"},
-                         cpr::Header{{"Authorization", "Bearer " + token_},
-                                     {"Content-Type", "application/json"}},
-                         cpr::Body{json_str});
+bool ChatClient::CreateRoom(const std::string& name) {
+    Json::Value body;
+    body["name"] = name;
+    auto res = SendPostRequest(std::string(api::ROOM_CREATE), body);
+    std::cout << res.text << "\n";
+    return res.status_code == 200;
+}
+
+bool ChatClient::JoinRoom(const std::string& name) {
+    Json::Value body;
+    body["name"] = name;
+    auto res = SendPostRequest(std::string(api::ROOM_JOIN), body);
+    std::cout << res.text << "\n";
+    return res.status_code == 200;
+}
+
+bool ChatClient::LeaveRoom() {
+    auto res = SendPostRequest(std::string(api::ROOM_LEAVE), Json::objectValue);
+    std::cout << res.text << "\n";
+    return res.status_code == 200;
+}
+
+bool ChatClient::ListRooms() {
+    auto res = SendGetRequest(std::string(api::ROOM_LIST));
+    std::cout << res.text << "\n";
+    return res.status_code == 200;
+}
+
+bool ChatClient::GetCurrentRoom() {
+    auto res = SendGetRequest(std::string(api::ROOM_CURRENT));
+    std::cout << res.text << "\n";
+    return res.status_code == 200;
+}
+
+bool ChatClient::GetUsersInRoom(const std::string& roomName) {
+    auto res = SendGetRequest(std::string(api::ROOM_USERS) + "?name=" + roomName);
     std::cout << res.text << "\n";
     return res.status_code == 200;
 }
@@ -119,12 +108,32 @@ bool ChatClient::IsLoggedIn() const {
     return !token_.empty();
 }
 
-std::string ChatClient::GetToken() const {
-    return token_;
+bool ChatClient::ParseTokenFromJson(const std::string& jsonText) {
+    Json::CharReaderBuilder reader;
+    Json::Value root;
+    std::string errs;
+    std::istringstream s(jsonText);
+    if (Json::parseFromStream(reader, s, &root, &errs)) {
+        if (root.isMember("token")) {
+            token_ = root["token"].asString();
+            std::cout << "Token: " << token_ << "\n"; // для отладки
+            return true;
+        }
+    }
+    return false;
 }
 
-std::string ChatClient::GetBaseUrl() const {
-    return base_url_;
+cpr::Response ChatClient::SendPostRequest(const std::string& endpoint, const Json::Value& body, bool auth) {
+    Json::StreamWriterBuilder writer;
+    cpr::Header headers = {{"Content-Type", "application/json"}};
+    if (auth) headers["Authorization"] = "Bearer " + token_;
+    return cpr::Post(cpr::Url{base_url_ + endpoint}, headers, cpr::Body{Json::writeString(writer, body)});
+}
+
+cpr::Response ChatClient::SendGetRequest(const std::string& endpoint, bool auth) {
+    cpr::Header headers;
+    if (auth) headers["Authorization"] = "Bearer " + token_;
+    return cpr::Get(cpr::Url{base_url_ + endpoint}, headers);
 }
 
 void ChatClient::RunWebSocket() {
@@ -161,11 +170,11 @@ void ChatClient::StopWebSocket() {
     stop_ws_ = true;
 
     if (ws_thread_.joinable()) {
-        ws_thread_.join(); // ждём завершения
+        ws_thread_.join();
     }
 
     if (ws_client_) {
-        ws_client_->stop(); // затем останавливаем WebSocket
-        ws_client_.reset(); // после удаляем
+        ws_client_->stop();
+        ws_client_.reset();
     }
 }

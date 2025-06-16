@@ -1,6 +1,5 @@
 #include "command_handler.h"
 
-
 Command ParseCommand(const std::string& input) {
     static const std::unordered_map<std::string, Command> map = {
         {"register", Command::Register},
@@ -63,72 +62,34 @@ bool HandleCommand(Command cmd, ChatClient& client) {
         case Command::Exit:
             client.LogoutUser();
             return false;
-
-        case Command::CreateRoom:
-        case Command::JoinRoom:
+        case Command::CreateRoom: {
+            cin.ignore();
+            std::string name;
+            cout << "Room name: "; getline(cin, name);
+            client.CreateRoom(name);
+            break;
+        }
+        case Command::JoinRoom: {
+            cin.ignore();
+            std::string name;
+            cout << "Room name: "; getline(cin, name);
+            client.JoinRoom(name);
+            break;
+        }
         case Command::LeaveRoom:
+            client.LeaveRoom();
+            break;
         case Command::ListRooms:
+            client.ListRooms();
+            break;
         case Command::CurrentRoom:
+            client.GetCurrentRoom();
+            break;
         case Command::UsersInRoom: {
-            if (!client.IsLoggedIn()) {
-                std::cout << "You are not logged in\n";
-                break;
-            }
-
-            std::string url, method = "POST";
-            Json::Value json;
-            Json::StreamWriterBuilder writer;
-            std::string resText;
-
-            switch (cmd) {
-                case Command::CreateRoom: {
-                    cin.ignore();
-                    std::string room;
-                    cout << "Room name: "; getline(cin, room);
-                    json["name"] = room;
-                    url = "/api/room/create";
-                    break;
-                }
-                case Command::JoinRoom: {
-                    cin.ignore();
-                    std::string room;
-                    cout << "Room name: "; getline(cin, room);
-                    json["name"] = room;
-                    url = "/api/room/join";
-                    break;
-                }
-                case Command::LeaveRoom:
-                    url = "/api/room/leave";
-                    break;
-                case Command::ListRooms:
-                    url = "/api/room/list";
-                    method = "GET";
-                    break;
-                case Command::CurrentRoom:
-                    url = "/api/room/current";
-                    method = "GET";
-                    break;
-                case Command::UsersInRoom: {
-                    std::string name;
-                    cin.ignore();
-                    cout << "Room name: "; getline(cin, name);
-                    url = "/api/room/users?name=" + name;
-                    method = "GET";
-                    break;
-                }
-                default: break;
-            }
-
-            cpr::Response res;
-            cpr::Header headers = {{"Authorization", "Bearer " + client.GetToken()}};
-            if (method == "POST") {
-                headers["Content-Type"] = "application/json";
-                res = cpr::Post(cpr::Url{client.GetBaseUrl() + url},
-                                headers, cpr::Body{Json::writeString(writer, json)});
-            } else {
-                res = cpr::Get(cpr::Url{client.GetBaseUrl() + url}, headers);
-            }
-            cout << res.text << "\n";
+            cin.ignore();
+            std::string name;
+            cout << "Room name: "; getline(cin, name);
+            client.GetUsersInRoom(name);
             break;
         }
         case Command::Unknown:

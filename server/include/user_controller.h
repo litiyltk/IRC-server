@@ -1,5 +1,6 @@
 #pragma once
 
+#include "http_utils.h"
 #include "token_storage.h"
 #include "chat_websocket.h"
 

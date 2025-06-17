@@ -28,7 +28,7 @@ curl -X POST http://localhost:8080/api/auth/register \
 **HTTP 409 Conflict**
 ```json
 {
-  "error":"User already exists"
+  "error":"User already registered"
 }
 ```
 
@@ -44,7 +44,7 @@ curl -X POST http://localhost:8080/api/auth/register \
 **HTTP 400 Bad Request**
 ```json
 {
-  "error":"Fields 'login' and 'password' must be non-empty"
+  "error":"Empty login or password"
 }
 ```
 
@@ -54,8 +54,6 @@ curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"login":"alice", "password":"1234"}'
 ```
-
-Возможные ответы // TODO проверить и дополнить ответы
 
 Успешный вход
 **HTTP 200**
@@ -69,11 +67,33 @@ curl -X POST http://localhost:8080/api/auth/login \
 **HTTP 400 Bad Request**
 ```json
 {
-  "error":"Missing login or password" // TODO заменить на Invalid JSON format
+  "error":"Invalid JSON format"
 }
 ```
 
-ответ при некорректном логине или пароле "Invalid login or password"
+При отсутствии имени или пароля
+**HTTP 400 Bad Request**
+```json
+{
+  "error":"Empty login or password"
+}
+```
+
+Нет данных о пользователе (логин и пароль не зарегистрированы)
+**HTTP 401 Unauthorized**
+```json
+{
+  "error":"Invalid login or password"
+}
+```
+
+Запрещён вход при уже залогиненном пользователе
+**HTTP 403 Forbidden**
+```json
+{
+  "error":"User already logged in"
+}
+```
 
 #### Выход (токен аннулируется)
 ```bash
@@ -81,8 +101,29 @@ curl -X POST http://localhost:8080/api/auth/logout \
   -H "Authorization: Bearer 96b1f594eb48c7026d90a1601eca4ce7"
 ```
 
-ответ Logged out
-ответ при некорректном токене Invalid token
+Успешный выход
+**HTTP 200**
+```json
+{
+  "info":"Logged out"
+}
+```
+
+Ошибка при извлечении токена авторизации
+**HTTP 401 Unauthorized**
+```json
+{
+  "error":"Failed to extract token"
+}
+```
+
+Токен не действительный
+**HTTP 401 Unauthorized**
+```json
+{
+  "error":"Invalid token"
+}
+```
 
 ---
 
@@ -92,6 +133,31 @@ curl -X POST http://localhost:8080/api/auth/logout \
 ```bash
 curl -X GET http://localhost:8080/api/users/online \
   -H "Authorization: Bearer 2a3d8e712bcebc2da7416dc67cf9103a"
+```
+
+Возврат массива json при успешном запросе
+**HTTP 200**
+```json
+[
+  "alice",
+  "bob"
+]
+```
+
+Ошибка при извлечении токена авторизации
+**HTTP 401 Unauthorized**
+```json
+{
+  "error":"Failed to extract token"
+}
+```
+
+Токен не действительный
+**HTTP 401 Unauthorized**
+```json
+{
+  "error":"Invalid token"
+}
 ```
 
 ---
@@ -159,7 +225,47 @@ curl -X POST http://localhost:8080/api/messages \
   -d '{"text":"Привет, чат!", "to":""}'
 ```
 
-#### Отправка сообщения через WebSocket
+Успешная отправка
+**HTTP 200**
+```json
+{
+  "info":"Message sent"
+}
+```
+
+Ошибка при извлечении токена авторизации
+**HTTP 401 Unauthorized**
+```json
+{
+  "error":"Failed to extract token"
+}
+```
+
+Токен не действительный
+**HTTP 401 Unauthorized**
+```json
+{
+  "error":"Invalid token"
+}
+```
+
+Невалидный json
+**HTTP 400 Bad Request**
+```json
+{
+  "error":"Invalid JSON format"
+}
+```
+
+При отсутствии сообщения
+**HTTP 400 Bad Request**
+```json
+{
+  "error":"Empty message"
+}
+```
+
+Отправка сообщения через WebSocket - пример:
 ```bash
 wscat -c "ws://localhost:8080/chat?token=2a3d8e712bcebc2da7416dc67cf9103a"
 ```

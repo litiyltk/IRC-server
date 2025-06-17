@@ -1,0 +1,43 @@
+#pragma once
+
+#include <string>
+#include <memory>
+#include <unordered_set>
+
+
+// TODO заменить сущности на User->Room->RoomManager и UserAuthData
+class Room;
+
+class User {
+public:
+    User(int id, const std::string& name);
+
+    int GetId() const;
+    const std::string& GetName() const;
+
+    std::shared_ptr<Room> GetRoom() const;
+    void SetRoom(std::shared_ptr<Room> room);
+
+private:
+    int id_;
+    std::string name_;
+    std::weak_ptr<Room> room_;
+};
+
+class Room {
+public:
+    Room(int id, const std::string& name);
+
+    int GetId() const;
+    const std::string& getName() const;
+
+    void AddUser(const std::shared_ptr<User>& user);
+    void RemoveUser(const std::shared_ptr<User>& user);
+
+    const std::unordered_set<std::shared_ptr<User>>& GetUsers() const;
+
+private:
+    int id_;
+    std::string name_;
+    std::unordered_set<std::shared_ptr<User>> users_;
+};

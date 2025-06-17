@@ -11,21 +11,21 @@ bool ChatClient::RegisterUser(const std::string& login, const std::string& passw
     body["login"] = login;
     body["password"] = PasswordHasher().HashPassword(password);
     auto res = SendPostRequest(std::string(api::AUTH_REGISTER), body, false);
-    std::cout << res.text << "\n";
+    std::cout << res.text << " " << res.status_code << "\n"; // для отладки
     return res.status_code == 200;
 }
 
 bool ChatClient::LoginUser(const std::string& login, const std::string& password) {
-    if (IsLoggedIn()) {
+    /*if (IsLoggedIn()) {
         std::cout << "Already logged in " << login_ << "\n";
         return false;
-    }
+    }*/
 
     Json::Value body;
     body["login"] = login;
     body["password"] = PasswordHasher().HashPassword(password);
     auto res = SendPostRequest(std::string(api::AUTH_LOGIN), body, false);
-
+    std::cout << res.text << " " << res.status_code << "\n"; // для отладки
     if (res.status_code == 200 && ParseTokenFromJson(res.text)) {
         login_ = login;
         RunWebSocket();
@@ -33,7 +33,6 @@ bool ChatClient::LoginUser(const std::string& login, const std::string& password
     }
 
     token_.clear();
-    std::cout << "Login failed: " << res.text << "\n";
     return false;
 }
 
@@ -42,16 +41,20 @@ bool ChatClient::LogoutUser() {
         std::cout << "You are not logged in\n";
         return false;
     }
+    
     auto res = SendPostRequest(std::string(api::AUTH_LOGOUT), Json::objectValue);
+    std::cout << res.text << " " << res.status_code << "\n"; // для отладки
+
     token_.clear();
     StopWebSocket();
-    std::cout << "Logged out successfully.\n";
+
     return res.status_code == 200;
 }
 
 bool ChatClient::GetOnlineUsers() {
     auto res = SendGetRequest(std::string(api::USERS_ONLINE));
-    std::cout << res.text << "\n";
+    std::cout << res.text << " " << res.status_code << "\n"; // для отладки
+
     return res.status_code == 200;
 }
 
@@ -60,7 +63,8 @@ bool ChatClient::SendMessage(const std::string& text, const std::string& to) {
     body["text"] = text;
     body["to"] = to;
     auto res = SendPostRequest(std::string(api::MESSAGE_SEND), body);
-    std::cout << res.text << "\n";
+    std::cout << res.text << " " << res.status_code << "\n"; // для отладки
+
     return res.status_code == 200;
 }
 
@@ -68,7 +72,8 @@ bool ChatClient::CreateRoom(const std::string& name) {
     Json::Value body;
     body["name"] = name;
     auto res = SendPostRequest(std::string(api::ROOM_CREATE), body);
-    std::cout << res.text << "\n";
+    std::cout << res.text << " " << res.status_code << "\n"; // для отладки
+
     return res.status_code == 200;
 }
 
@@ -76,31 +81,36 @@ bool ChatClient::JoinRoom(const std::string& name) {
     Json::Value body;
     body["name"] = name;
     auto res = SendPostRequest(std::string(api::ROOM_JOIN), body);
-    std::cout << res.text << "\n";
+    std::cout << res.text << " " << res.status_code << "\n"; // для отладки
+
     return res.status_code == 200;
 }
 
 bool ChatClient::LeaveRoom() {
     auto res = SendPostRequest(std::string(api::ROOM_LEAVE), Json::objectValue);
-    std::cout << res.text << "\n";
+    std::cout << res.text << " " << res.status_code << "\n"; // для отладки
+
     return res.status_code == 200;
 }
 
 bool ChatClient::ListRooms() {
     auto res = SendGetRequest(std::string(api::ROOM_LIST));
-    std::cout << res.text << "\n";
+    std::cout << res.text << " " << res.status_code << "\n"; // для отладки
+
     return res.status_code == 200;
 }
 
 bool ChatClient::GetCurrentRoom() {
     auto res = SendGetRequest(std::string(api::ROOM_CURRENT));
-    std::cout << res.text << "\n";
+    std::cout << res.text << " " << res.status_code << "\n"; // для отладки
+
     return res.status_code == 200;
 }
 
 bool ChatClient::GetUsersInRoom(const std::string& roomName) {
     auto res = SendGetRequest(std::string(api::ROOM_USERS) + "?name=" + roomName);
-    std::cout << res.text << "\n";
+    std::cout << res.text << " " << res.status_code << "\n"; // для отладки
+    
     return res.status_code == 200;
 }
 
@@ -157,22 +167,9 @@ void ChatClient::RunWebSocket() {
     });
 
     ws_client_->start();
-
-    ws_thread_ = std::thread([this]() {
-        while (!stop_ws_) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
-        std::cout << "Stop WebSocket\n";
-    });
 }
 
 void ChatClient::StopWebSocket() {
-    stop_ws_ = true;
-
-    if (ws_thread_.joinable()) {
-        ws_thread_.join();
-    }
-
     if (ws_client_) {
         ws_client_->stop();
         ws_client_.reset();

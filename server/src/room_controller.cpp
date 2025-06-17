@@ -2,6 +2,24 @@
 
 
 static std::string ExtractUserFromRequest(const drogon::HttpRequestPtr &req, drogon::HttpResponsePtr &resp) { // TODO вынести в отдельный файл
+    /*
+    auto authHeader = req->getHeader("Authorization");
+    std::string token;
+    if (authHeader.find("Bearer ") == 0) {
+        token = authHeader.substr(7);
+    // Некорректный заголовок: токен нельзя извлечь, либо нет токена
+    } else {
+        http_utils::RespondWithError("Failed to extract token", drogon::k401Unauthorized, std::move(callback));
+        return;
+    }
+
+    // Токен авторизации не найден
+    std::string from = "";
+    if (!TokenStorage::instance().HasUserByToken(token, from)) { // если отправитель будет найден, то from сохранит имя
+        http_utils::RespondWithError("Invalid token", drogon::k401Unauthorized, std::move(callback));
+        return;
+    }
+    */
     auto authHeader = req->getHeader("Authorization");
     if (authHeader.find("Bearer ") != 0) {
         resp->setStatusCode(drogon::k401Unauthorized);

@@ -48,3 +48,13 @@ void TokenStorage::RemoveToken(const std::string& token) {
         token_to_user_.erase(it);
     }
 }
+
+std::optional<std::string> TokenStorage::GetUserByToken(const std::string& token) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto it = token_to_user_.find(token);
+    if (it != token_to_user_.end()) {
+        return it->second;
+    }
+    return std::nullopt;
+}
+

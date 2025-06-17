@@ -1,6 +1,7 @@
 #pragma once
 
 #include "const_api.h"
+#include "http_utils.h"
 #include "user_manager.h"
 #include "token_generator.h"
 #include "token_storage.h"

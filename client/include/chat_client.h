@@ -6,15 +6,10 @@
 #include <cpr/cpr.h>
 #include <json/json.h>
 #include <ixwebsocket/IXWebSocket.h>
-#include <openssl/sha.h>
 
-#include <atomic>
-#include <iomanip>
 #include <iostream>
-#include <memory>
 #include <sstream>
 #include <string>
-#include <thread>
 
 
 class ChatClient {
@@ -47,8 +42,6 @@ private:
     std::string ws_url_;
 
     std::unique_ptr<ix::WebSocket> ws_client_;
-    std::thread ws_thread_;
-    std::atomic<bool> stop_ws_{false};
 
     bool IsLoggedIn() const;
     bool ParseTokenFromJson(const std::string& jsonText);

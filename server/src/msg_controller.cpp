@@ -6,46 +6,43 @@ void MessageController::SendMessage(const drogon::HttpRequestPtr &req, std::func
     std::string token;
     if (authHeader.find("Bearer ") == 0) {
         token = authHeader.substr(7);
+    // Некорректный заголовок: токен нельзя извлечь, либо нет токена
     } else {
-        auto resp = drogon::HttpResponse::newHttpResponse();
-        resp->setStatusCode(drogon::k401Unauthorized);
-        resp->setContentTypeCode(drogon::CT_TEXT_PLAIN);
-        resp->setBody("Missing or invalid token");
-        callback(resp);
+        http_utils::RespondWithError("Failed to extract token", drogon::k401Unauthorized, std::move(callback));
         return;
     }
 
-    std::string from;
-    if (!TokenStorage::instance().HasUserByToken(token, from)) {
-        auto resp = drogon::HttpResponse::newHttpResponse();
-        resp->setStatusCode(drogon::k401Unauthorized);
-        resp->setContentTypeCode(drogon::CT_TEXT_PLAIN);
-        resp->setBody("Invalid token");
-        callback(resp);
+    // Токен авторизации не найден
+    std::string user = "";
+    if (!TokenStorage::instance().HasUserByToken(token, user)) {
+        http_utils::RespondWithError("Invalid token", drogon::k401Unauthorized, std::move(callback));
         return;
     }
 
+    // нет нужных полей, невалидный json
     auto json = req->getJsonObject();
     if (!json || !json->isMember("text")) {
-        auto resp = drogon::HttpResponse::newHttpJsonResponse(Json::Value("Missing text"));
-        resp->setStatusCode(drogon::k400BadRequest);
-        callback(resp);
+        http_utils::RespondWithError("Invalid JSON format", drogon::k400BadRequest, std::move(callback));
         return;
     }
 
-    std::string text = (*json)["text"].asString();
-    std::string to = json->get("to", "").asString();
+    std::string from = user; // имя было найдено HasUserByToken
+    std::string text = (*json)["text"].asString(); // парсим текст
+    std::string to = json->get("to", "").asString(); // находим получателя (рассылка внутри команты отправителя)
 
+    // пустое поле json
+    if (text.empty()) {
+        http_utils::RespondWithError("Empty message", drogon::k400BadRequest, std::move(callback));
+        return;
+    }
+
+    // успех - выполняем рассылку
     Json::Value msg;
     msg["from"] = from;
     msg["text"] = text;
-    std::string serialized = Json::FastWriter().write(msg);
+    std::string serialized = Json::FastWriter().write(msg); 
 
-    ChatWebSocket::Broadcast(from, to, serialized);
+    ChatWebSocket::Broadcast(from, to, serialized); // рассылка через WebSocket
 
-    auto resp = drogon::HttpResponse::newHttpResponse();
-    resp->setStatusCode(drogon::k200OK);
-    resp->setContentTypeCode(drogon::CT_TEXT_PLAIN);
-    resp->setBody("Message sent");
-    callback(resp);
+    http_utils::RespondWithSuccess("Message sent", drogon::k200OK, std::move(callback));
 }

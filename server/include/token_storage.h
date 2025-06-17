@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mutex>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -13,6 +14,8 @@ public:
     bool HasUserByToken(const std::string& token, std::string& user);
     bool HasTokenByUser(const std::string& user, std::string& token);
     void RemoveToken(const std::string& token);
+
+    std::optional<std::string> GetUserByToken(const std::string& token);
 
 private:
     std::unordered_map<std::string, std::string> user_to_token_;

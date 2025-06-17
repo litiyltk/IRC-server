@@ -1,6 +1,7 @@
 #pragma once
 
 #include "const_api.h"
+#include "http_utils.h"
 #include "room_manager.h"
 #include "token_storage.h"
 

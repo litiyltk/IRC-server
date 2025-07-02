@@ -12,7 +12,7 @@ bool ChatClient::RegisterUser(const std::string& login, const std::string& passw
     body["password"] = PasswordHasher().HashPassword(password);
     auto res = SendPostRequest(std::string(api::AUTH_REGISTER), body, false);
     std::cout << res.text << "\n";
-    return res.status_code == 200;
+    return res.status_code == 201;
 }
 
 bool ChatClient::LoginUser(const std::string& login, const std::string& password) {
@@ -45,7 +45,7 @@ bool ChatClient::LogoutUser() {
     auto res = SendPostRequest(std::string(api::AUTH_LOGOUT), Json::objectValue);
     token_.clear();
     StopWebSocket();
-    std::cout << "Logged out successfully.\n";
+    std::cout << "Logged out successfully\n";
     return res.status_code == 200;
 }
 
@@ -55,11 +55,24 @@ bool ChatClient::GetOnlineUsers() {
     return res.status_code == 200;
 }
 
-bool ChatClient::SendMessage(const std::string& text, const std::string& to) {
+bool ChatClient::SendMessage(const std::string& text) {
     Json::Value body;
     body["text"] = text;
-    body["to"] = to;
     auto res = SendPostRequest(std::string(api::MESSAGE_SEND), body);
+    std::cout << res.text << "\n";
+    return res.status_code == 200;
+}
+
+bool ChatClient::UploadMessage(const std::string& text) {
+    Json::Value body;
+    body["text"] = text;
+    auto res = SendPostRequest(std::string(api::MESSAGE_UPLOAD), body);
+    std::cout << res.text << "\n";
+    return res.status_code == 200;
+}
+
+bool ChatClient::GetRecentMessages(const std::string& room, int max_items) {
+    auto res = SendGetRequest(std::string(api::MESSAGE_RECENT) + "?room=" + room + "&max_items=" + std::to_string(max_items));
     std::cout << res.text << "\n";
     return res.status_code == 200;
 }
@@ -69,7 +82,7 @@ bool ChatClient::CreateRoom(const std::string& name) {
     body["name"] = name;
     auto res = SendPostRequest(std::string(api::ROOM_CREATE), body);
     std::cout << res.text << "\n";
-    return res.status_code == 200;
+    return res.status_code == 201;
 }
 
 bool ChatClient::JoinRoom(const std::string& name) {
@@ -98,8 +111,22 @@ bool ChatClient::GetCurrentRoom() {
     return res.status_code == 200;
 }
 
-bool ChatClient::GetUsersInRoom(const std::string& roomName) {
-    auto res = SendGetRequest(std::string(api::ROOM_USERS) + "?name=" + roomName);
+std::string ChatClient::GetCurrentRoomName() {
+    auto res = SendGetRequest(std::string(api::ROOM_CURRENT));
+    Json::CharReaderBuilder reader;
+    Json::Value root;
+    std::string errs;
+    std::istringstream s(res.text);
+    if (Json::parseFromStream(reader, s, &root, &errs)) {
+        if (root.isMember("room")) {
+            return root["room"].asString();
+        }
+    }
+    return "";
+}
+
+bool ChatClient::GetUsersInRoom(const std::string& name) {
+    auto res = SendGetRequest(std::string(api::ROOM_USERS) + "?name=" + name);
     std::cout << res.text << "\n";
     return res.status_code == 200;
 }
@@ -108,11 +135,11 @@ bool ChatClient::IsLoggedIn() const {
     return !token_.empty();
 }
 
-bool ChatClient::ParseTokenFromJson(const std::string& jsonText) {
+bool ChatClient::ParseTokenFromJson(const std::string& json_str) {
     Json::CharReaderBuilder reader;
     Json::Value root;
     std::string errs;
-    std::istringstream s(jsonText);
+    std::istringstream s(json_str);
     if (Json::parseFromStream(reader, s, &root, &errs)) {
         if (root.isMember("token")) {
             token_ = root["token"].asString();
@@ -157,22 +184,9 @@ void ChatClient::RunWebSocket() {
     });
 
     ws_client_->start();
-
-    ws_thread_ = std::thread([this]() {
-        while (!stop_ws_) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
-        std::cout << "Stop WebSocket\n";
-    });
 }
 
 void ChatClient::StopWebSocket() {
-    stop_ws_ = true;
-
-    if (ws_thread_.joinable()) {
-        ws_thread_.join();
-    }
-
     if (ws_client_) {
         ws_client_->stop();
         ws_client_.reset();

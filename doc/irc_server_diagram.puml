@@ -1,0 +1,55 @@
+@startuml
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+' === Контроллеры ===
+package "Контроллеры" {
+    class AuthController
+    class RoomController
+    class MessageController
+    class UserController
+    class ChatWebSocket
+}
+
+' === Сервисный слой ===
+package "Бизнес-логика" {
+    class ChatService
+    class TokenManager
+}
+
+' === БД ===
+package "База данных" {
+    class IRCDBWrapper
+}
+
+' === Утилиты ===
+package "Токены" {
+    class TokenGenerator
+    class Token
+}
+
+' === Плагины ===
+package "Плагины" {
+    class ChatServicePlugin
+    class DatabasePlugin
+}
+
+
+' === Связи ===
+
+AuthController --> ChatServicePlugin
+RoomController --> ChatServicePlugin
+MessageController --> ChatServicePlugin
+UserController --> ChatServicePlugin
+ChatWebSocket --> ChatServicePlugin
+
+ChatServicePlugin --> ChatService
+ChatServicePlugin --> DatabasePlugin : GetDB()
+
+ChatService --> IRCDBWrapper
+ChatService --> TokenManager
+
+TokenManager --> TokenGenerator : использует
+
+TokenGenerator <-- Token
+@enduml

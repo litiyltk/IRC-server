@@ -4,16 +4,18 @@ Command ParseCommand(const std::string& input) {
     static const std::unordered_map<std::string, Command> map = {
         {"register", Command::Register},
         {"login",    Command::Login},
-        {"send",     Command::Send},
+        {"send",     Command::SendMessage},
+        {"upload",   Command::UploadMessage},
+        {"recent",   Command::GetRecentMessages},
         {"list",     Command::List},
         {"logout",   Command::Logout},
         {"exit",     Command::Exit},
-        {"create-room", Command::CreateRoom},
-        {"join-room",   Command::JoinRoom},
-        {"leave-room",  Command::LeaveRoom},
-        {"rooms",       Command::ListRooms},
-        {"room",        Command::CurrentRoom},
-        {"list-room",   Command::UsersInRoom}
+        {"create",   Command::CreateRoom},
+        {"join",     Command::JoinRoom},
+        {"leave",    Command::LeaveRoom},
+        {"rooms",    Command::ListRooms},
+        {"room",     Command::CurrentRoom},
+        {"users",    Command::UsersInRoom}
     };
 
     auto it = map.find(input);
@@ -44,13 +46,28 @@ bool HandleCommand(Command cmd, ChatClient& client) {
             client.LoginUser(login, pass);
             break;
         }
-        case Command::Send: {
-            std::string to, text;
+        case Command::SendMessage: {
+            std::string text;
             cin.ignore();
-            cout << "To (empty = Broadcast): ";
-            getline(cin, to);
             cout << "Message: "; getline(cin, text);
-            client.SendMessage(text, to);
+            client.SendMessage(text); // 1. отправляем
+            client.UploadMessage(text); // 2. сохраняем в БД
+            break;
+        }
+        case Command::UploadMessage: {
+            std::string text;
+            cin.ignore();
+            cout << "Message to save: "; getline(cin, text);
+            client.UploadMessage(text);
+            break;
+        }
+        case Command::GetRecentMessages: {
+            std::string room;
+            int max_items;
+            cin.ignore();
+            cout << "Room name: "; getline(cin, room);
+            cout << "Max messages: "; cin >> max_items;
+            client.GetRecentMessages(room, max_items);
             break;
         }
         case Command::List:
@@ -73,12 +90,17 @@ bool HandleCommand(Command cmd, ChatClient& client) {
             cin.ignore();
             std::string name;
             cout << "Room name: "; getline(cin, name);
-            client.JoinRoom(name);
+            if (client.JoinRoom(name)) {
+                client.GetRecentMessages(name, 10); // при входе в комнату получаем историю 10 последних сообщений
+            }
             break;
         }
-        case Command::LeaveRoom:
-            client.LeaveRoom();
+        case Command::LeaveRoom: {
+            if (client.LeaveRoom()) {
+                client.GetRecentMessages("general", 10); // после выхода получаем последние сообщения из общей комнаты
+            }
             break;
+        }
         case Command::ListRooms:
             client.ListRooms();
             break;
@@ -86,10 +108,12 @@ bool HandleCommand(Command cmd, ChatClient& client) {
             client.GetCurrentRoom();
             break;
         case Command::UsersInRoom: {
-            cin.ignore();
-            std::string name;
-            cout << "Room name: "; getline(cin, name);
-            client.GetUsersInRoom(name);
+            std::string room = client.GetCurrentRoomName();
+            if (room.empty()) {
+                std::cout << "You are not in any room\n";
+            } else {
+                client.GetUsersInRoom(room);
+            }
             break;
         }
         case Command::Unknown:

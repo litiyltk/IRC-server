@@ -12,7 +12,9 @@
 enum class Command {
     Register,
     Login,
-    Send,
+    SendMessage,
+    UploadMessage,
+    GetRecentMessages,
     List,
     Logout,
     Exit,

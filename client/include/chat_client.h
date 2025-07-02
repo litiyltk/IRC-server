@@ -8,13 +8,8 @@
 #include <ixwebsocket/IXWebSocket.h>
 #include <openssl/sha.h>
 
-#include <atomic>
-#include <iomanip>
 #include <iostream>
-#include <memory>
-#include <sstream>
 #include <string>
-#include <thread>
 
 
 class ChatClient {
@@ -27,10 +22,13 @@ public:
     bool LoginUser(const std::string& login, const std::string& password);
     bool LogoutUser();
 
-    // REST API список всех клиентов и рассылка
+    // REST API список всех клиентов
     bool GetOnlineUsers();
-    bool SendMessage(const std::string& text,
-                     const std::string& to = ""); // по умолчанию рассылка всем (Broadcast)
+
+    // REST API для работы с сообщениями
+    bool SendMessage(const std::string& text); // рассылка в пределах комнаты
+    bool UploadMessage(const std::string& text); // загрузка сообщения
+    bool GetRecentMessages(const std::string& room, int max_items); // получение последних сообщений
 
     // REST API для работы с комнатами
     bool CreateRoom(const std::string& name);
@@ -38,20 +36,19 @@ public:
     bool LeaveRoom();
     bool ListRooms();
     bool GetCurrentRoom();
-    bool GetUsersInRoom(const std::string& roomName);
+    std::string GetCurrentRoomName();
+    bool GetUsersInRoom(const std::string& name);
 
 private:
     std::string token_;
     std::string login_;
     std::string base_url_;
     std::string ws_url_;
-
+    
     std::unique_ptr<ix::WebSocket> ws_client_;
-    std::thread ws_thread_;
-    std::atomic<bool> stop_ws_{false};
 
     bool IsLoggedIn() const;
-    bool ParseTokenFromJson(const std::string& jsonText);
+    bool ParseTokenFromJson(const std::string& json_str);
 
     // WebSocket'ы
     void RunWebSocket();

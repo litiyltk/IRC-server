@@ -24,7 +24,7 @@ int main() {
     ChatClient client(servers[index].ip, servers[index].port);
 
     while (true) {
-        std::cout << "\nКоманды (register/login/send/list/logout/exit/create-room/join-room/leave-room/rooms/room/list-room): ";
+        std::cout << "\nКоманды (register/login/logout/exit/send/rooms/list/create/join/leave/room/users): ";
         std::cin >> input;
 
         Command cmd = ParseCommand(input);

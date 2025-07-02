@@ -1,0 +1,35 @@
+@startuml irc_er_diagram
+
+!pragma output_format pdf
+!pragma output_directory ${fileDirname}
+!pragma output_file ${fileBasenameNoExtension}.pdf
+
+entity "users" as users {
+  * id : int <<PK>>
+  username : varchar
+  password_hash : varchar
+  registered_at : datetime
+}
+entity "rooms" as rooms{
+  * id : int <<PK>>
+  name : varchar
+  created_at : datetime
+}
+entity "messages" as messages {
+  * id : int <<PK>>
+  user_id : int <<FK>>
+  room_id : int <<FK>>
+  text : text
+  sent_at : datetime
+}
+entity "room_members" as room_members {
+  * id : int <<PK>>
+  room_id : int <<FK>>
+  user_id : int <<FK>>
+  joined_at : datetime
+}
+users ||--o{ messages : writes
+rooms ||--o{ messages : contains
+users ||--o{ room_members : is
+rooms ||--o{ room_members : has
+@enduml

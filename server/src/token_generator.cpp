@@ -1,6 +1,8 @@
 #include "token_generator.h"
 
 
+namespace chat {
+
 std::string TokenGenerator::UintToHEX(uint64_t number) {
     std::stringstream ss;
     ss << std::hex << std::setw(16) << std::setfill('0') << number;
@@ -12,3 +14,5 @@ std::string TokenGenerator::GenerateHEXToken() {
 }
 
 TokenGenerator Token::GENERATOR;
+
+}  // namespace chat

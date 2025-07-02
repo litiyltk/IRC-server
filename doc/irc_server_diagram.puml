@@ -11,7 +11,7 @@ package "Контроллеры" {
     class ChatWebSocket
 }
 
-' === Сервисный слой ===
+' === Бизнес-логика и БД ===
 package "Бизнес-логика" {
     class ChatService
     class TokenManager
@@ -22,7 +22,7 @@ package "База данных" {
     class IRCDBWrapper
 }
 
-' === Утилиты ===
+' === Токены ===
 package "Токены" {
     class TokenGenerator
     class Token
@@ -32,16 +32,26 @@ package "Токены" {
 package "Плагины" {
     class ChatServicePlugin
     class DatabasePlugin
+    class LoggerPlugin
 }
 
 
 ' === Связи ===
 
 AuthController --> ChatServicePlugin
+AuthController --> LoggerPlugin
+
 RoomController --> ChatServicePlugin
+RoomController --> LoggerPlugin
+
 MessageController --> ChatServicePlugin
+MessageController --> LoggerPlugin
+
 UserController --> ChatServicePlugin
+UserController --> LoggerPlugin
+
 ChatWebSocket --> ChatServicePlugin
+ChatWebSocket --> LoggerPlugin
 
 ChatServicePlugin --> ChatService
 ChatServicePlugin --> DatabasePlugin : GetDB()

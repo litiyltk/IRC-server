@@ -8,6 +8,7 @@ void ChatWebSocket::handleNewConnection(const drogon::HttpRequestPtr &req, const
     const auto &query = req->getParameters();
     auto it = query.find("token");
     if (it == query.end()) {
+        conn->send("Missing token"); // Ответ: ошибка
         conn->shutdown();
         drogon::app().getPlugin<LoggerPlugin>()->LogWebSocketEvent("Missing token");
         return;
@@ -19,6 +20,7 @@ void ChatWebSocket::handleNewConnection(const drogon::HttpRequestPtr &req, const
     auto chat_service = ChatServicePlugin::GetService();
     auto user_opt = chat_service->GetUserByToken(token);
     if (!user_opt) {
+        conn->send("Invalid token"); // Ответ: ошибка
         conn->shutdown();
         drogon::app().getPlugin<LoggerPlugin>()->LogWebSocketEvent("Invalid token");
         return;
@@ -35,6 +37,7 @@ void ChatWebSocket::handleNewConnection(const drogon::HttpRequestPtr &req, const
 
     auto room_opt = chat_service->GetCurrentRoomName(token);
     if (room_opt) {
+        //conn->send("User " + user + " connected"); // Ответ: успех для отладки
         drogon::app().getPlugin<LoggerPlugin>()->LogWebSocketEvent("User " + user + " in room " + *room_opt);
     }
 }
@@ -48,12 +51,12 @@ void ChatWebSocket::handleNewMessage(const drogon::WebSocketConnectionPtr &ws_co
 
     Json::Reader reader;
     Json::Value root;
-    if (!reader.parse(message, root)) {
-        drogon::app().getPlugin<LoggerPlugin>()->LogWebSocketEvent("Failed to parse message");
+    if (!reader.parse(message, root) || !root.isObject()) {
+        drogon::app().getPlugin<LoggerPlugin>()->LogWebSocketEvent("Failed to parse JSON message");
         return;
     }
 
-    const std::string text = root.get("text", "").asString();
+    const std::string text = root.get("text", "").asString(); // {"text" : <сообщение>}
     if (text.empty()) {
         drogon::app().getPlugin<LoggerPlugin>()->LogWebSocketEvent("Empty message");
         return;

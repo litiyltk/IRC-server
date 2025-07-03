@@ -1,6 +1,7 @@
 #!/bin/bash
 
 declare -A tokens
+declare -A ws_pids
 
 users=("a" "b" "c" "d" "e")
 
@@ -24,25 +25,23 @@ for user in "${users[@]}"; do
   echo "Токен для $user: $token"
 
   tokens["$user"]="$token"
+
+  echo "Открытие WebSocket для $user"
+  # WebSocket-подключение с использованием websocat
+  websocat "ws://localhost:8080/ws/chat?token=${token}" >/dev/null 2>&1 &
+  ws_pids["$user"]=$!
 done
 
-# Отправка сообщений
-echo -e "\n=== Отправка сообщений ==="
-for user in "${users[@]}"; do
+sleep 1
+
+# Отправка сообщений в general от пользователей a и b
+echo -e "\n=== Пользователи a и b отправляют сообщения в general ==="
+for user in "a" "b"; do
   token="${tokens[$user]}"
   curl -s -X POST http://localhost:8080/api/v1/messages/send \
     -H "Authorization: Bearer $token" \
     -H "Content-Type: application/json" \
-    -d "{\"text\":\"Сообщение от $user\"}" &
-done
-wait
-
-# Запрос списка всех комнат
-echo -e "\n=== Запрос списка всех комнат ==="
-for user in "${users[@]}"; do
-  token="${tokens[$user]}"
-  curl -s -X GET http://localhost:8080/api/v1/room/list \
-    -H "Authorization: Bearer $token" &
+    -d "{\"text\":\"Сообщение в general от $user\"}" &
 done
 wait
 
@@ -65,7 +64,7 @@ for user in "${users[@]}"; do
 done
 wait
 
-# Возврат пользователей a и b
+# Возврат пользователей a и b в general
 echo -e "\n=== Возврат пользователей a и b в general ==="
 for user in "a" "b"; do
   token="${tokens[$user]}"
@@ -76,26 +75,16 @@ for user in "a" "b"; do
 done
 wait
 
-# Пользователь c смотрит список пользователей в new_room
-echo -e "\n=== Пользователь c смотрит список пользователей в new_room ==="
-curl -s -X GET "http://localhost:8080/api/v1/room/users?name=new_room" \
-  -H "Authorization: Bearer ${tokens["c"]}"
-echo
-
-# Пользователь a смотрит список пользователей в general
-echo -e "\n=== Пользователь a смотрит список пользователей в general ==="
-curl -s -X GET "http://localhost:8080/api/v1/room/users?name=general" \
-  -H "Authorization: Bearer ${tokens["a"]}"
-echo
-
-# Запрос комнаты каждого пользователя
-echo -e "\n=== Запрос комнаты каждого пользователя ==="
-for user in "${users[@]}"; do
+# Пользователи c, d, e отправляют сообщения в new_room
+echo -e "\n=== Пользователи c, d, e отправляют сообщения в new_room ==="
+for user in "c" "d" "e"; do
   token="${tokens[$user]}"
-  curl -s -X GET http://localhost:8080/api/v1/room/current \
-    -H "Authorization: Bearer $token"
-  echo
+  curl -s -X POST http://localhost:8080/api/v1/messages/send \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -d "{\"text\":\"Сообщение в new_room от $user\"}" &
 done
+wait
 
 # Выход всех пользователей
 echo -e "\n=== Выход всех пользователей ==="
@@ -105,3 +94,9 @@ for user in "${users[@]}"; do
     -H "Authorization: Bearer $token" &
 done
 wait
+
+# Закрытие WebSocket-соединений
+echo -e "\n=== Закрытие WebSocket-соединений ==="
+for user in "${users[@]}"; do
+  kill "${ws_pids[$user]}" 2>/dev/null
+done

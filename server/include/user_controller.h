@@ -10,7 +10,7 @@
 #include "http_utils.h"
 
 #include "chat_service_plugin.h"
-#include "chat_websocket.h"
+#include "chat_notifier.h"
 
 #include <drogon/HttpController.h>
 #include <json/json.h>

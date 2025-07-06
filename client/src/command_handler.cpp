@@ -43,7 +43,9 @@ bool HandleCommand(Command cmd, ChatClient& client) {
             cin >> login;
             cout << "Password: ";
             cin >> pass;
-            client.LoginUser(login, pass);
+            if (client.LoginUser(login, pass)) {
+                client.GetRecentMessages("general", 10); // при входе в комнату получаем историю 10 последних сообщений
+            }
             break;
         }
         case Command::SendMessage: {
@@ -97,7 +99,7 @@ bool HandleCommand(Command cmd, ChatClient& client) {
         }
         case Command::LeaveRoom: {
             if (client.LeaveRoom()) {
-                client.GetRecentMessages("general", 10); // после выхода получаем последние сообщения из общей комнаты
+                client.GetRecentMessages("general", 10); // / при входе в комнату получаем историю 10 последних сообщений (из общей комнаты)
             }
             break;
         }

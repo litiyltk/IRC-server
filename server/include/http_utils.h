@@ -136,14 +136,4 @@ inline void RespondWithJson(const Json::Value& body,
     callback(resp);
 }
 
-/**
- * @brief Удаляет символ переноса строки ('\n') в конце строки.
- * @param str Строка, из которой нужно удалить символ переноса строки.
- */
-/*inline void TrimNewLineSymb(std::string& str) {
-    if (!str.empty() && str.back() == '\n') {
-        str.pop_back();
-    }
-}*/
-
 }  // namespace http_utils

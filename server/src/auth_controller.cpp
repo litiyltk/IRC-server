@@ -2,7 +2,7 @@
 
 
 void AuthController::RegisterUser(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback) {
-    // req.get()->version(); // TODO нужно добавить обработку version, keep_alive (или необязательно?)
+    // req.get()->version(); // нужно добавить обработку version, keep_alive или необязательно?
     auto json = req->getJsonObject();
 
     // нет нужных полей, невалидный json

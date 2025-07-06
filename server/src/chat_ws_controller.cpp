@@ -1,4 +1,4 @@
-#include "chat_websocket.h"
+#include "chat_ws_controller.h"
 
 
 std::mutex ChatWebSocket::conn_mutex_;

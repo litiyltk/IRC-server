@@ -239,7 +239,7 @@ curl -X GET http://localhost:8080/api/v1/room/current \
   -H "Authorization: Bearer 2a3d8e712bcebc2da7416dc67cf9103a"
 ```
 
-Возврат json с название комнаты по полю room
+Возврат json с название комнаты по полю `room`
 **HTTP 200**
 ```json
 {
@@ -397,7 +397,7 @@ curl -X GET "http://localhost:8080/api/v1/messages/recent?room=general&max_items
 ]
 ```
 
-При отсутствии полей room или max_items, либо некорректное поле room
+При отсутствии полей `room` или `max_items`, либо некорректное поле `room`
 **HTTP 400 Bad Request**
 ```json
 {
@@ -405,7 +405,7 @@ curl -X GET "http://localhost:8080/api/v1/messages/recent?room=general&max_items
 }
 ```
 
-При некорректном поле max_items - не число
+При некорректном поле `max_items` - не число
 **HTTP 400 Bad Request**
 ```json
 {
@@ -413,7 +413,7 @@ curl -X GET "http://localhost:8080/api/v1/messages/recent?room=general&max_items
 }
 ```
 
-При некорректном поле max_items - не натуральное число
+При некорректном поле `max_items` - не натуральное число
 **HTTP 400 Bad Request**
 ```json
 {
@@ -428,6 +428,61 @@ curl -X GET "http://localhost:8080/api/v1/messages/recent?room=general&max_items
   "error":"Room not found"
 }
 ```
+
+#### Получение страницы сообщений из комнаты  
+```bash  
+curl -X GET "http://localhost:8080/api/v1/messages/page?room=general&offset=0&limit=10" \  
+  -H "Authorization: Bearer 2a3d8e712bcebc2da7416dc67cf9103a"  
+```  
+
+Возврат массива json при успешном запросе  
+**HTTP 200**  
+```json  
+[  
+  {  
+    "from": "alice",  
+    "sent_at": "2024-06-24 20:12:45",  
+    "text": "Привет!"  
+  },  
+  {  
+    "from": "bob",  
+    "sent_at": "2024-06-24 20:13:10",  
+    "text": "Привет, Alice!"  
+  }  
+]  
+```  
+
+При отсутствии полей `room`, `offset` или `limit`  
+**HTTP 400 Bad Request**  
+```json  
+{  
+  "error":"Invalid parameters"  
+}  
+```  
+
+Если поле `offset` или `limit` не являются числами  
+**HTTP 400 Bad Request**  
+```json  
+{  
+  "error":"Invalid parameter: offset or limit"  
+}  
+```  
+
+Если `offset` < 0 или `limit` ≤ 0  
+**HTTP 400 Bad Request**  
+```json  
+{  
+  "error":"Parameters must be: offset >= 0, limit > 0"  
+}  
+```  
+
+Комната не найдена  
+**HTTP 404 Not Found**  
+```json  
+{  
+  "error":"Room not found"  
+}  
+```  
 
 ---
 

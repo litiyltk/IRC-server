@@ -10,7 +10,7 @@
 #include "http_utils.h"
 
 #include "chat_service_plugin.h"
-#include "chat_websocket.h"
+#include "chat_notifier.h"
 
 #include <drogon/HttpController.h>
 #include <json/json.h>
@@ -41,7 +41,10 @@ public:
          * @brief Регистрирует метод GetRecentMessages для обработки GET-запросов на маршруте MESSAGE_RECENT.
          */
         ADD_METHOD_TO(MessageController::GetRecentMessages, std::string(api::MESSAGE_RECENT), drogon::Get);
-        //ADD_METHOD_TO(MessageController::GetRoomMessagesPage, std::string(api::MESSAGE_PAGE), drogon::Get); // TODO если будет нужен постраничный вывод
+         /**
+         * @brief Регистрирует метод GetRoomMessagesPage для обработки GET-запросов на маршруте MESSAGE_PAGE.
+         */
+        ADD_METHOD_TO(MessageController::GetRoomMessagesPage, std::string(api::MESSAGE_PAGE), drogon::Get);
     METHOD_LIST_END
 
      /**
@@ -63,5 +66,10 @@ public:
      * @param callback Функция обратного вызова для отправки HTTP-ответа.
      */
     void GetRecentMessages(const drogon::HttpRequestPtr& req, std::function<void(const drogon::HttpResponsePtr&)>&& callback);
-    //void GetRoomMessagesPage(const drogon::HttpRequestPtr& req, std::function<void(const drogon::HttpResponsePtr&)>&& callback); // TODO заготовка для пагинации
+    /**
+     * @brief Получает постранично сообщения из базы данных.
+     * @param req Указатель на объект HttpRequest, представляющий HTTP-запрос.
+     * @param callback Функция обратного вызова для отправки HTTP-ответа.
+     */
+    void GetRoomMessagesPage(const drogon::HttpRequestPtr& req, std::function<void(const drogon::HttpResponsePtr&)>&& callback);
 };

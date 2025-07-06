@@ -3,7 +3,7 @@
 
 namespace chat {
 
-inline const std::string GENERAL_ROOM = "general"; // TODO вынести в константы
+inline const std::string GENERAL_ROOM = "general";
 
 ChatService::ChatService(std::shared_ptr<IRCDBWrapper> db_wrapper,
                          std::shared_ptr<TokenManager> token_mgr)

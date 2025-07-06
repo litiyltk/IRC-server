@@ -1,5 +1,5 @@
 /**
- * @file chat_websocket.h
+ * @file chat_ws_controller.h
  * @brief Заголовочный файл для класса ChatWebSocket, реализующего WebSocket-соединение для чата.
  * @details Определяет класс ChatWebSocket, который обрабатывает WebSocket-соединения
  *  для рассылки сообщений в чате.

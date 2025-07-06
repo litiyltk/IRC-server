@@ -51,8 +51,26 @@ bool ChatClient::LogoutUser() {
 
 bool ChatClient::GetOnlineUsers() {
     auto res = SendGetRequest(std::string(api::USERS_ONLINE));
-    std::cout << res.text << "\n";
-    return res.status_code == 200;
+
+    if (res.status_code != 200) {
+        return false;
+    }
+
+    Json::Reader reader;
+    Json::Value root;
+    if (!reader.parse(res.text, root) || !root.isArray()) {
+        return false;
+    }
+
+    std::cout << "\n--- Пользователи онлайн ---\n";
+
+    for (const auto& user : root) {
+        std::cout << "- " << user.asString() << "\n";
+    }
+
+    std::cout << "----------------------------\n";
+
+    return true;
 }
 
 bool ChatClient::SendMessage(const std::string& text) {
@@ -73,8 +91,30 @@ bool ChatClient::UploadMessage(const std::string& text) {
 
 bool ChatClient::GetRecentMessages(const std::string& room, int max_items) {
     auto res = SendGetRequest(std::string(api::MESSAGE_RECENT) + "?room=" + room + "&max_items=" + std::to_string(max_items));
-    std::cout << res.text << "\n";
-    return res.status_code == 200;
+    
+    if (res.status_code != 200) {
+        return false;
+    }
+
+    Json::Reader reader;
+    Json::Value root;
+    if (!reader.parse(res.text, root) || !root.isArray()) {
+        return false;
+    }
+
+    std::cout << "\n--- Сообщения в комнате " << room << " ---\n";
+
+    for (const auto& msg : root) {
+        const std::string from = msg.get("from", "").asString();
+        //const std::string sent_at = msg.get("sent_at", "").asString();
+        const std::string text = msg.get("text", "").asString();
+
+        std::cout << /*"[" << sent_at << "] " <<*/ from << ": " << text << "\n";
+    }
+
+    std::cout << "--------------------------------------------\n";
+
+    return true;
 }
 
 bool ChatClient::CreateRoom(const std::string& name) {
@@ -101,8 +141,26 @@ bool ChatClient::LeaveRoom() {
 
 bool ChatClient::ListRooms() {
     auto res = SendGetRequest(std::string(api::ROOM_LIST));
-    std::cout << res.text << "\n";
-    return res.status_code == 200;
+
+    if (res.status_code != 200) {
+        return false;
+    }
+
+    Json::Reader reader;
+    Json::Value root;
+    if (!reader.parse(res.text, root) || !root.isArray()) {
+        return false;
+    }
+
+    std::cout << "\n---- Комнаты ----\n";
+
+    for (const auto& room : root) {
+        std::cout << "- " << room.asString() << "\n";
+    }
+
+    std::cout << "----------------------\n";
+
+    return true;
 }
 
 bool ChatClient::GetCurrentRoom() {
@@ -127,8 +185,26 @@ std::string ChatClient::GetCurrentRoomName() {
 
 bool ChatClient::GetUsersInRoom(const std::string& name) {
     auto res = SendGetRequest(std::string(api::ROOM_USERS) + "?name=" + name);
-    std::cout << res.text << "\n";
-    return res.status_code == 200;
+
+    if (res.status_code != 200) {
+        return false;
+    }
+
+    Json::Reader reader;
+    Json::Value root;
+    if (!reader.parse(res.text, root) || !root.isArray()) {
+        return false;
+    }
+
+    std::cout << "\n--- Пользователи в комнате " << name << " ---\n";
+
+    for (const auto& user : root) {
+        std::cout << "- " << user.asString() << "\n";
+    }
+
+    std::cout << "--------------------------------------------\n";
+
+    return true;
 }
 
 bool ChatClient::IsLoggedIn() const {
@@ -168,7 +244,7 @@ void ChatClient::RunWebSocket() {
     std::string url = ws_url_ + "?token=" + token_;
     ws_client_->setUrl(url);
 
-    std::cout << "WebSocket: connecting to " << url << "...\n";
+    std::cout << "WebSocket connected: " << url << "\n";
 
     ws_client_->setOnMessageCallback([this](const ix::WebSocketMessagePtr& msg) {
         if (msg->type == ix::WebSocketMessageType::Message) {

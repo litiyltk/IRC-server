@@ -69,8 +69,7 @@ void RoomController::JoinRoom(const drogon::HttpRequestPtr &req, std::function<v
         return;
     }
 
-    const std::string name = (*json)["name"].asString(); // при необходимости срезать '\n' в name - проблема в клиенте?
-    //http_utils::TrimNewLineSymb(name); // TODO убрать костыль
+    const std::string name = (*json)["name"].asString();
 
     // пустое имя комнаты
     if (name.empty()) {
@@ -190,8 +189,6 @@ void RoomController::ListUsersInRoom(const drogon::HttpRequestPtr &req, std::fun
         http_utils::RespondWithError("Invalid parameters", drogon::k400BadRequest, std::move(callback));
         return;
     }
-
-    //http_utils::TrimNewLineSymb(room); // TODO убрать костыль
 
     // комната не существует
     

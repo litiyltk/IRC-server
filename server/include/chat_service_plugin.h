@@ -17,10 +17,8 @@
 /**
  * @class ChatServicePlugin
  * @brief Плагин для доступа к сервису управления чатом (ChatService).
- * @details Этот плагин обеспечивает глобальный доступ к сервису `ChatService`,
- *  который управляет аутентификацией, пользователями, комнатами и сообщениями
- *  в чате. Плагин создает экземпляр `ChatService` при инициализации и
- *  предоставляет статический метод для доступа к этому экземпляру.
+ * @details Создаёт и управляет временем жизни `ChatService`. Сам не владеет зависимостями.
+ *   Предоставляет статический метод для доступа к `ChatService`.
  */
 class ChatServicePlugin : public drogon::Plugin<ChatServicePlugin> {
 public:
@@ -44,9 +42,9 @@ public:
      * @brief Получает глобальный экземпляр ChatService.
      * @return std::shared_ptr<chat::ChatService> Указатель на экземпляр ChatService.
      */
-    static std::shared_ptr<chat::ChatService> GetService();
+    static chat::ChatService* GetService();
 
 private:
    /** @brief Указатель на глобальный экземпляр ChatService. */
-    static std::shared_ptr<chat::ChatService> chat_service_;
+    static chat::ChatService* chat_service_;
 };

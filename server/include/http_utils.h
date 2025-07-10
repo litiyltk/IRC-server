@@ -50,7 +50,7 @@ inline void RespondWithSuccess(const std::string& message,
                                const std::function<void(const drogon::HttpResponsePtr&)>& callback) {
     Json::Value body;
     body["info"] = message;
-    drogon::app().getPlugin<LoggerPlugin>()->LogResponse(message);
+    drogon::app().getPlugin<LoggerPlugin>()->LogResponse(message); // TODO закешировать, это дорогая операция
     callback(MakeJsonResponse(body, code));
 }
 

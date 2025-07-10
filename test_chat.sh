@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo -e "\n=== Тест для пяти пользователей ==="
+
 declare -A tokens
 declare -A ws_pids
 
@@ -31,8 +33,6 @@ for user in "${users[@]}"; do
   websocat "ws://localhost:8080/ws/chat?token=${token}" >/dev/null 2>&1 &
   ws_pids["$user"]=$!
 done
-
-sleep 1
 
 # Отправка сообщений в general от пользователей a и b
 echo -e "\n=== Пользователи a и b отправляют сообщения в general ==="

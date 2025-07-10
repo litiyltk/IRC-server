@@ -19,6 +19,9 @@ void RoomController::CreateRoom(const drogon::HttpRequestPtr &req, std::function
         return;
     }
 
+    // Обновляем активность пользователя
+    chat_service->UpdateActivityByToken(token);
+
     // нет нужных полей, невалидный json
     auto json = req->getJsonObject();
     if (!json || !json->isMember("name")) {
@@ -61,6 +64,9 @@ void RoomController::JoinRoom(const drogon::HttpRequestPtr &req, std::function<v
         http_utils::RespondWithError("Invalid token", drogon::k401Unauthorized, std::move(callback));
         return;
     }
+
+    // Обновляем активность пользователя
+    chat_service->UpdateActivityByToken(token);
 
     // нет нужных полей, невалидный json
     auto json = req->getJsonObject();
@@ -106,6 +112,9 @@ void RoomController::LeaveRoom(const drogon::HttpRequestPtr &req, std::function<
         return;
     }
 
+    // Обновляем активность пользователя
+    chat_service->UpdateActivityByToken(token);
+
     // нельзя перейти в несуществующую комнату
     if (!chat_service->LeaveRoom(token)) {
         http_utils::RespondWithError("Room general not founded", drogon::k404NotFound, std::move(callback));
@@ -134,6 +143,9 @@ void RoomController::ListRooms(const drogon::HttpRequestPtr &req, std::function<
         return;
     }
 
+    // Обновляем активность пользователя
+    chat_service->UpdateActivityByToken(token);
+
     // успех - возвращаем список всех комнат
     http_utils::RespondWithStringArray("List of rooms", chat_service->GetRoomNames(), callback);
 }
@@ -155,6 +167,9 @@ void RoomController::CurrentRoom(const drogon::HttpRequestPtr &req, std::functio
         http_utils::RespondWithError("Invalid token", drogon::k401Unauthorized, std::move(callback));
         return;
     }
+
+    // Обновляем активность пользователя
+    chat_service->UpdateActivityByToken(token);
 
     // успех - возвращаем текущую комнату пользователя
     Json::Value json;
@@ -181,6 +196,9 @@ void RoomController::ListUsersInRoom(const drogon::HttpRequestPtr &req, std::fun
         http_utils::RespondWithError("Invalid token", drogon::k401Unauthorized, std::move(callback));
         return;
     }
+
+    // Обновляем активность пользователя
+    chat_service->UpdateActivityByToken(token);
 
     const std::string room = req->getParameter("name");
 

@@ -19,7 +19,7 @@
  * @brief Контроллер для обработки запросов Ping.
  * @details Реализует REST API для проверки доступности сервера.
  */
-class PingController : public drogon::HttpController<PingController> {
+class PingController : public drogon::HttpController<PingController> { // TODO замена на healthcheck в docker-compose.yml
 public:
     /**
      * @brief Макрос для определения списка HTTP-методов, обрабатываемых контроллером.

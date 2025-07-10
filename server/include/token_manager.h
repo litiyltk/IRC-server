@@ -1,10 +1,6 @@
 /**
  * @file token_manager.h
- * @brief Заголовочный файл для класса TokenManager, управляющего токенами аутентификации.
- * @details Определяет класс TokenManager, который предоставляет методы для сохранения,
- *  удаления и получения токенов аутентификации, а также для получения списка
- *  идентификаторов онлайн-пользователей. Использует мьютекс для обеспечения
- *  потокобезопасности.
+ * @brief Заголовочный файл для класса TokenManager с поддержкой Idle Timeout.
  */
 #pragma once
 
@@ -15,65 +11,98 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <chrono>
 
 
 namespace chat {
 
 /**
  * @class TokenManager
- * @brief Класс для управления токенами аутентификации.
- * @details Предоставляет методы для сохранения, удаления и получения токенов
- *  аутентификации, а также для получения списка идентификаторов
- *  онлайн-пользователей.  Использует мьютекс для обеспечения
- *  потокобезопасности.
+ * @brief Класс для управления токенами аутентификации с поддержкой автоматического удаления по таймауту.
  */
 class TokenManager {
 public:
-    
+
     /**
      * @brief Сохраняет токен для указанного идентификатора пользователя.
      * @param user_id Идентификатор пользователя.
-     * @param token Токен, который необходимо сохранить.
+     * @param token Токен аутентификации.
      */
     void SaveToken(postgres::UserId user_id, const std::string& token);
-     /**
-     * @brief Удаляет токен, связанный с указанным идентификатором пользователя.
+
+    /**
+     * @brief Удаляет токен по идентификатору пользователя.
      * @param user_id Идентификатор пользователя.
      */
     void RemoveTokenByUserId(const postgres::UserId& user_id);
+    
     /**
-     * @brief Удаляет токен по его значению.
-     * @param token Токен, который необходимо удалить.
+     * @brief Удаляет токен по строковому значению токена.
+     * @param token Токен аутентификации.
      */
     void RemoveTokenByToken(const std::string& token);
-    
-      /**
-     * @brief Получает токен, связанный с указанным идентификатором пользователя.
+
+    /**
+     * @brief Получает токен по идентификатору пользователя.
      * @param user_id Идентификатор пользователя.
-     * @return std::optional<std::string> Токен, если он найден, в противном случае `std::nullopt`.
+     * @return Токен, если найден.
      */
     std::optional<std::string> GetTokenByUserId(const postgres::UserId& user_id) const;
-    
+
     /**
-     * @brief Получает идентификатор пользователя, связанный с указанным токеном.
-     * @param token Токен, который необходимо найти.
-     * @return std::optional<postgres::UserId> Идентификатор пользователя, если он найден, в противном случае `std::nullopt`.
+     * @brief Получает идентификатор пользователя по токену.
+     * @param token Токен аутентификации.
+     * @return Идентификатор пользователя, если найден.
      */
     std::optional<postgres::UserId> GetUserIdByToken(const std::string& token) const;
 
-      /**
-     * @brief Получает список идентификаторов пользователей, у которых есть активные токены.
-     * @return std::vector<postgres::UserId> Список идентификаторов онлайн-пользователей.
+    /**
+     * @brief Получает список идентификаторов всех пользователей с активными токенами.
+     * @return Вектор идентификаторов пользователей.
      */
     std::vector<postgres::UserId> GetOnlineUserIds() const;
 
+    /**
+     * @brief Обновляет время последней активности пользователя по токену.
+     * @param token Токен пользователя.
+     */
+    void UpdateActivityByToken(const std::string& token);
+
+    /**
+     * @brief Получает список токенов, которые не обновлялись в течение заданного времени.
+     * @param timeout Время бездействия, по истечении которого токены считаются просроченными.
+     * @return std::vector<std::string> список токенов, которые не обновлялись в течение заданного времени.
+     */
+    std::vector<std::string> GetExpiredTokens(std::chrono::minutes timeout) const;
+
 private:
-     /** @brief Мьютекс для обеспечения потокобезопасности. */
+    /**
+     * @struct TokenInfo
+     * @brief Структура, хранящая информацию о токене пользователя.
+     * @details Содержит сам токен и временную метку последней активности.
+     */
+    struct TokenInfo {
+        std::string token;  ///< Токен пользователя (HEX-строка)
+        std::chrono::steady_clock::time_point last_activity;  ///< Последнее время активности пользователя
+    };
+
+    /** 
+     * @brief Мьютекс для обеспечения потокобезопасного доступа к токенам.
+     * @details Защищает все внутренние карты токенов от гонок и конкурентного доступа.
+     */
     mutable std::mutex mutex_;
-    /** @brief Карта, связывающая идентификатор пользователя с его токеном. */
-    std::unordered_map<postgres::UserId, std::string, util::TaggedHasher<postgres::UserId>> id_to_token_;
-    /** @brief Карта, связывающая токен с идентификатором пользователя. */
+
+    /**
+     * @brief Ассоциативная карта: ID пользователя -> информация о токене.
+     * @details Используется для быстрого поиска токена и времени последней активности по идентификатору пользователя.
+     */
+    std::unordered_map<postgres::UserId, TokenInfo, util::TaggedHasher<postgres::UserId>> id_to_token_;
+
+    /**
+     * @brief Обратная карта: токен -> ID пользователя.
+     * @details Используется для аутентификации по токену, проверки активности и поиска владельца.
+     */
     std::unordered_map<std::string, postgres::UserId> token_to_id_;
 };
 
-}  // namespace chat
+} // namespace chat

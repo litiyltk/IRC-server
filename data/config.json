@@ -5,15 +5,24 @@
       "port": 8080
     }
   ],
-  "log": {
-    "log_level": "ERROR",
-    "log_path": "./logs",
-    "log_file": "server.log"
+"app": {
+    "log": {
+      /*
+        Если параметры файла не указаны - вывод в консоль
+      */
+      //"log_path": "../logs", // Путь
+      //"logfile_base_name": "server", // Имя файла
+      //"log_size_limit": 10485760, // Размер каждого файла в байтах (10 Мб)
+      //"log_level": "DEBUG"
+    }
   },
   "plugins": [
     {
       "name": "LoggerPlugin",
-      "type": "Global"
+      "type": "Global",
+      "config": {
+        "log_level": "debug"
+      }
     },
     {
       "name": "DatabasePlugin",
@@ -25,6 +34,13 @@
     {
       "name": "ChatServicePlugin",
       "type": "Global"
+    },
+    {
+      "name": "TokenMonitorPlugin",
+      "config": {
+        "cleanup_interval_seconds": 30, // Интревал проверки токенов
+        "token_timeout_minutes": 5 // Время жизни токена без активности
+      }
     }
   ]
 }

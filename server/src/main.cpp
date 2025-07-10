@@ -1,6 +1,3 @@
-#include "chat_service_plugin.h"
-#include "logger_plugin.h"
-
 #include <drogon/drogon.h>
 #include <thread>
 

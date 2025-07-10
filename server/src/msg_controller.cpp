@@ -20,6 +20,9 @@ void MessageController::SendMessage(const drogon::HttpRequestPtr &req, std::func
         return;
     }
 
+    // Обновляем активность пользователя
+    chat_service->UpdateActivityByToken(token);
+
     // нет нужных полей, невалидный json
     auto json = req->getJsonObject();
     if (!json || !json->isMember("text")) {
@@ -66,6 +69,9 @@ void MessageController::UploadMessage(const drogon::HttpRequestPtr &req, std::fu
         return;
     }
 
+    // Обновляем активность пользователя
+    chat_service->UpdateActivityByToken(token);
+
     // нет нужных полей, невалидный json
     auto json = req->getJsonObject();
     if (!json || !json->isMember("text")) {
@@ -108,6 +114,9 @@ void MessageController::GetRecentMessages(const drogon::HttpRequestPtr &req, std
         return;
     }
 
+    // Обновляем активность пользователя
+    chat_service->UpdateActivityByToken(token);
+
     const std::string room = req->getParameter("room");
     const std::string max_items_str = req->getParameter("max_items");
 
@@ -118,9 +127,8 @@ void MessageController::GetRecentMessages(const drogon::HttpRequestPtr &req, std
     }
 
     int max_items = 0;
-    try {
-        max_items = std::stoi(max_items_str);
-    } catch (...) {
+    auto [ptr, ec] = std::from_chars(max_items_str.data(), max_items_str.data() + max_items_str.size(), max_items);
+    if (ec != std::errc()) {
         http_utils::RespondWithError("Invalid parameter: max_items", drogon::k400BadRequest, std::move(callback));
         return;
     }
@@ -171,6 +179,9 @@ void MessageController::GetRoomMessagesPage(const drogon::HttpRequestPtr& req, s
         return;
     }
 
+    // Обновляем активность пользователя
+    chat_service->UpdateActivityByToken(token);
+
     const std::string room = req->getParameter("room");
     const std::string offset_str = req->getParameter("offset");
     const std::string limit_str = req->getParameter("limit");
@@ -183,10 +194,10 @@ void MessageController::GetRoomMessagesPage(const drogon::HttpRequestPtr& req, s
 
     int offset = 0;
     int limit = 0;
-    try {
-        offset = std::stoi(offset_str);
-        limit = std::stoi(limit_str);
-    } catch (...) {
+    auto [ptr1, ec1] = std::from_chars(offset_str.data(), offset_str.data() + offset_str.size(), offset);
+    auto [ptr2, ec2] = std::from_chars(limit_str.data(), limit_str.data() + limit_str.size(), limit);
+
+    if (ec1 != std::errc() || ec2 != std::errc()) {
         http_utils::RespondWithError("Invalid parameter: offset or limit", drogon::k400BadRequest, std::move(callback));
         return;
     }

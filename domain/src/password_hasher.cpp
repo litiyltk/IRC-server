@@ -3,8 +3,8 @@
 
 std::string PasswordHasher::HashPassword(const std::string& password) {
     // Для хэша используем 256 бит = 32 байта
-    unsigned char hash[SHA256_DIGEST_LENGTH]; 
-    SHA256(reinterpret_cast<const unsigned char*>(password.c_str()), password.size(), hash);
+    std::array<unsigned char, SHA256_DIGEST_LENGTH> hash{};
+    SHA256(reinterpret_cast<const unsigned char*>(password.c_str()), password.size(), hash.data());
 
     // Байты в HEX строку
     std::ostringstream oss;

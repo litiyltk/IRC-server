@@ -160,11 +160,15 @@ bool ChatService::SaveMessage(const std::string& token, const std::string& text)
 }
 
 std::vector<postgres::MessageRecord> ChatService::GetRecentMessages(const std::string& room_name, int max_items) const {
-    return db_wrapper_.GetRecentMessages(room_name, max_items);
+    auto messages = db_wrapper_.GetRecentMessages(room_name, max_items);
+    std::reverse(messages.begin(), messages.end());
+    return messages;
 }
 
 std::vector<postgres::MessageRecord> ChatService::GetRoomMessagesPage(const std::string& room_name, int offset, int limit) const {
-    return db_wrapper_.GetRoomMessagesPage(room_name, offset, limit);
+    auto messages = db_wrapper_.GetRoomMessagesPage(room_name, offset, limit);
+    std::reverse(messages.begin(), messages.end());
+    return messages;
 }
 
 std::optional<postgres::UserRecord> ChatService::GetUserByToken(const std::string& token) const {

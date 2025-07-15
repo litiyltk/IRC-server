@@ -1,6 +1,7 @@
 #pragma once
 
 #include <openssl/sha.h>
+#include <array>
 #include <iomanip>
 #include <sstream>
 #include <string>

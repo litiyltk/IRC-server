@@ -14,25 +14,17 @@ public:
      * @param token Токен аутентификации пользователя.
      * @param message Сообщение, полученное от клиента.
      */
-    static void Broadcast(const std::string& token, const std::string& message)
-    {
-        ChatWebSocket::Broadcast(token, message);
-    }
+    static void Broadcast(const std::string& token, const std::string& message);
 
     /**
      * @brief Возвращает список подключённых пользователей.
      * @return std::vector<std::string> Список подключённых пользователей.
      */
-    static std::vector<std::string> GetConnectedUsers()
-    {
-        return ChatWebSocket::GetConnectedUsers();
-    }
+    static std::vector<std::string> GetConnectedUsers();
 
     /**
      * @brief Принудительно отключает пользователей с недействительными токенами.
      * @details Вызывается, например, при периодической проверке активности токенов.
      */
-    static void DisconnectInvalidUsers() {
-        ChatWebSocket::DisconnectInvalidUsers();
-    }
+    static void DisconnectInvalidUsers();
 };

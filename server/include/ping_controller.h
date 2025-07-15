@@ -13,7 +13,6 @@
 #include <json/json.h>
 
 
-// REST API для проверки доступности сервера
 /**
  * @class PingController
  * @brief Контроллер для обработки запросов Ping.

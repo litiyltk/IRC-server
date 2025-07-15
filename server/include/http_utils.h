@@ -32,12 +32,7 @@ namespace http_utils {
  * @param code Код состояния HTTP (drogon::HttpStatusCode).
  * @return drogon::HttpResponsePtr Указатель на созданный HTTP-ответ.
  */
-inline drogon::HttpResponsePtr MakeJsonResponse(const Json::Value& body, drogon::HttpStatusCode code) {
-    auto resp = drogon::HttpResponse::newHttpJsonResponse(body);
-    resp->setStatusCode(code);
-    resp->setContentTypeCode(drogon::CT_APPLICATION_JSON);
-    return resp;
-}
+drogon::HttpResponsePtr MakeJsonResponse(const Json::Value& body, drogon::HttpStatusCode code);
 
 /**
  * @brief Отправляет успешный HTTP-ответ с сообщением в формате JSON.
@@ -45,14 +40,9 @@ inline drogon::HttpResponsePtr MakeJsonResponse(const Json::Value& body, drogon:
  * @param code Код состояния HTTP (drogon::HttpStatusCode).
  * @param callback Функция обратного вызова для отправки HTTP-ответа.
  */
-inline void RespondWithSuccess(const std::string& message,
+void RespondWithSuccess(const std::string& message,
                                drogon::HttpStatusCode code,
-                               const std::function<void(const drogon::HttpResponsePtr&)>& callback) {
-    Json::Value body;
-    body["info"] = message;
-    drogon::app().getPlugin<LoggerPlugin>()->LogResponse(message); // TODO закешировать, это дорогая операция
-    callback(MakeJsonResponse(body, code));
-}
+                               const std::function<void(const drogon::HttpResponsePtr&)>& callback);
 
 /**
  * @brief Отправляет HTTP-ответ с ошибкой в формате JSON.
@@ -60,28 +50,16 @@ inline void RespondWithSuccess(const std::string& message,
  * @param code Код состояния HTTP (drogon::HttpStatusCode).
  * @param callback Функция обратного вызова для отправки HTTP-ответа.
  */
-inline void RespondWithError(const std::string& message,
+void RespondWithError(const std::string& message,
                              drogon::HttpStatusCode code,
-                             const std::function<void(const drogon::HttpResponsePtr&)>& callback) {
-    Json::Value body;
-    body["error"] = message;
-    drogon::app().getPlugin<LoggerPlugin>()->LogResponse(message);
-    callback(MakeJsonResponse(body, code));
-}
+                             const std::function<void(const drogon::HttpResponsePtr&)>& callback);
 
 /**
  * @brief Пытается извлечь токен авторизации из заголовка запроса.
  * @param req Указатель на объект HttpRequest, представляющий HTTP-запрос.
  * @return std::optional<std::string> Токен авторизации, если он найден в заголовке, иначе std::nullopt.
  */
-inline std::optional<std::string> TryExtractToken(const drogon::HttpRequestPtr& req) {
-    const auto& authHeader = req->getHeader("Authorization");
-
-    if (authHeader.find("Bearer ") == 0) {
-        return authHeader.substr(7);
-    }
-    return std::nullopt;
-}
+std::optional<std::string> TryExtractToken(const drogon::HttpRequestPtr& req);
 
 /**
  * @brief Отправляет успешный HTTP-ответ с данными аутентификации (имя пользователя и токен) в формате JSON.
@@ -89,15 +67,9 @@ inline std::optional<std::string> TryExtractToken(const drogon::HttpRequestPtr& 
  * @param token Токен авторизации.
  * @param callback Функция обратного вызова для отправки HTTP-ответа.
  */
-inline void RespondAuthSuccess(const std::string& username,
+void RespondAuthSuccess(const std::string& username,
                                const std::string& token,
-                               const std::function<void(const drogon::HttpResponsePtr&)>& callback) {
-    Json::Value body;
-    body["user"] = username;
-    body["token"] = token;
-    drogon::app().getPlugin<LoggerPlugin>()->LogResponse("[Login] " + username);
-    callback(MakeJsonResponse(body, drogon::k200OK));
-}
+                               const std::function<void(const drogon::HttpResponsePtr&)>& callback);
 
 /**
  * @brief Отправляет успешный HTTP-ответ с массивом строк в формате JSON.
@@ -105,18 +77,9 @@ inline void RespondAuthSuccess(const std::string& username,
  * @param values Вектор строк для включения в тело ответа.
  * @param callback Функция обратного вызова для отправки HTTP-ответа.
  */
-inline void RespondWithStringArray(const std::string& message,
+void RespondWithStringArray(const std::string& message,
                                    const std::vector<std::string>& values,
-                                   const std::function<void(const drogon::HttpResponsePtr&)>& callback) {
-    Json::Value body(Json::arrayValue);
-    for (const auto& v : values) {
-        body.append(v);
-    }
-
-    drogon::app().getPlugin<LoggerPlugin>()->LogResponse("[Success] " + message);
-
-    callback(MakeJsonResponse(body, drogon::k200OK));
-}
+                                   const std::function<void(const drogon::HttpResponsePtr&)>& callback);
 
 /**
  * @brief Отправляет HTTP-ответ с произвольным JSON-объектом.
@@ -125,15 +88,9 @@ inline void RespondWithStringArray(const std::string& message,
  * @param code Код состояния HTTP (drogon::HttpStatusCode).
  * @param callback Функция обратного вызова для отправки HTTP-ответа.
  */
-inline void RespondWithJson(const Json::Value& body,
+void RespondWithJson(const Json::Value& body,
                             const std::string& message,
                             drogon::HttpStatusCode code,
-                            const std::function<void(const drogon::HttpResponsePtr&)>& callback) {
-    drogon::app().getPlugin<LoggerPlugin>()->LogResponse(message);
-    
-    auto resp = drogon::HttpResponse::newHttpJsonResponse(body);
-    resp->setStatusCode(code);
-    callback(resp);
-}
+                            const std::function<void(const drogon::HttpResponsePtr&)>& callback);
 
 }  // namespace http_utils
